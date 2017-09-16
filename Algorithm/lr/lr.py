@@ -2,6 +2,7 @@
 import os
 import csv
 import sys
+import random
 from os.path import dirname, join
 
 import numpy as np
@@ -31,7 +32,11 @@ def graDecent(dataNdArr,labelMatNdArr):
     for k in range(maxCycles):
         h = sigmoid(dataMat * theta)
         err = (h - labelMat)
-        theta = theta*(1-alpha*lambda_val/m) - alpha * dataMat.T * err
+        # theta = theta*(1-alpha*lambda_val/m) - tmp
+        # theta0不用正则化，一下写的太丑了，需要改
+        tmp = alpha * dataMat.T * err
+        theta[0,0] = theta[0,0] - tmp[0,0]
+        theta[1:,:] = theta[1:,:]*(1-alpha*lambda_val/m) - tmp[1:,:]
 
     return theta
 
@@ -39,7 +44,7 @@ def graDecent(dataNdArr,labelMatNdArr):
 # 1、初始化参数theta为1
 # 2、循环每行，根据公式更新每个参数
 # 3、调alpha参数，之前用0.001测试偏的太多
-def stocGraDecent(dataNdArr,labelMatNdArr):
+def stocGraDecent0(dataNdArr,labelMatNdArr):
     m, n = dataNdArr.shape
     theta = np.ones(n)
     alpha = 0.01
@@ -50,6 +55,29 @@ def stocGraDecent(dataNdArr,labelMatNdArr):
         err =  h - labelMatNdArr[i]
         #theta = theta*(1-alpha*lambda_val) - alpha*err*dataNdArr[i]
         theta = theta - alpha*err*dataNdArr[i]
+
+    return theta
+
+# 1、在随机梯度下降的基础上迭代numIter次
+# 2、每次更新参数的时候，随机从m个样本里选取一条数据更新(每条样本只能使用一次)
+# 3、每次更新参数的时候，修改alpha的值(减少)，比采用固定alpha的方法收敛速度更快
+def stocGraDecent1(dataNdArr,labelMatNdArr, numIter=150):
+    m, n = dataNdArr.shape
+    theta = np.ones(n)
+    # lambda_val = 0.001
+
+    for i in range(numIter):
+        dataIndex = range(m)
+        for j in range(m):
+            # 虽然alpha会随着迭代次数不断减小，但永远不会减小到0
+            alpha = 4.0/(i+j+1.0) + 0.0001
+            # 通过随机选取样本来更新回归系数将减少周期性的波动
+            randIndex = random.randrange(0, len(dataIndex))
+            h = sigmoid(sum(dataNdArr[randIndex]*theta))
+            err = h - labelMatNdArr[randIndex]
+            # theta = theta*(1-alpha*lambda_val) - alpha*err*dataNdArr[randIndex]
+            theta = theta - alpha*err*dataNdArr[randIndex]
+            del(dataIndex[randIndex])
 
     return theta
 
@@ -78,8 +106,11 @@ def plotBestFit(weights):
 
 dataNdArr,labelMatNdArr = load_lr_data()
 # weights.shape: (3,1) 转成(3,)
-#weights = graDecent(dataNdArr,labelMatNdArr)
-#plotBestFit(np.reshape(weights.tolist(), (3,)))
+weights = graDecent(dataNdArr,labelMatNdArr)
+plotBestFit(np.reshape(weights.tolist(), (3,)))
 
-weights = stocGraDecent(dataNdArr,labelMatNdArr)
-plotBestFit(weights)
+#weights = stocGraDecent0(dataNdArr,labelMatNdArr)
+#plotBestFit(weights)
+
+#weights = stocGraDecent1(dataNdArr,labelMatNdArr)
+#plotBestFit(weights)
