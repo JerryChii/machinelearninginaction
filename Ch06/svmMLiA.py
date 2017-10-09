@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 Created on Nov 4, 2010
 Chapter 5 source file for Machine Learing in Action
@@ -38,6 +39,7 @@ def smoSimple(dataMatIn, classLabels, C, toler, maxIter):
         for i in range(m):
             fXi = float(multiply(alphas,labelMat).T*(dataMatrix*dataMatrix[i,:].T)) + b
             Ei = fXi - float(labelMat[i])#if checks if an example violates KKT conditions
+            # E*y = f*y -y*y = f*y-1
             if ((labelMat[i]*Ei < -toler) and (alphas[i] < C)) or ((labelMat[i]*Ei > toler) and (alphas[i] > 0)):
                 j = selectJrand(i,m)
                 fXj = float(multiply(alphas,labelMat).T*(dataMatrix*dataMatrix[j,:].T)) + b
@@ -108,6 +110,7 @@ def selectJ(i, oS, Ei):         #this is the second choice -heurstic, and calcs 
     if (len(validEcacheList)) > 1:
         for k in validEcacheList:   #loop through valid Ecache values and find the one that maximizes delta E
             if k == i: continue #don't calc for i, waste of time
+            # TODO 为什么还要计算，不是都保存了值吗
             Ek = calcEk(oS, k)
             deltaE = abs(Ei - Ek)
             if (deltaE > maxDeltaE):
@@ -135,6 +138,7 @@ def innerL(i, oS):
             H = min(oS.C, oS.alphas[j] + oS.alphas[i])
         if L==H: print "L==H"; return 0
         eta = 2.0 * oS.K[i,j] - oS.K[i,i] - oS.K[j,j] #changed for kernel
+        # TODO 不懂
         if eta >= 0: print "eta>=0"; return 0
         oS.alphas[j] -= oS.labelMat[j]*(Ei - Ej)/eta
         oS.alphas[j] = clipAlpha(oS.alphas[j],H,L)
